@@ -1,0 +1,154 @@
+#{extends 'main.html' /}
+#{set title:'Announcer' /}
+
+#{verbatim}
+<script type="text/javascript">
+
+  var contacts = null
+  var running = false
+  
+  function addAttachment() {
+    $("#attachments").append("<br/><input type=\"file\" name=\"attachment\" id=\"attachment\" />")
+  }
+
+  function send() {
+    var count = 0
+    var delivered = ''
+    
+    $.each(contacts, function(index, value) {
+      if (running) {
+        var from = $('#from').val()
+        var subject = $('#subject').val()
+        var htmlContent = $('#htmlContent').val()
+        var textContent = $('#textContent').val()
+        
+        $.post('@{Application.sendOnce()}', 
+               { to: value.email, from: from, subject: subject, htmlContent: htmlContent, textContent: textContent }, 
+               function(data) {
+                 count++
+                 
+                 delivered = 'Delivered to '+ value.email + "\n<br />\n" + delivered
+                 
+                 $('#delivered').html(delivered)
+                 $('#delivered_count').html("Deliver: " + count)
+                 
+               })
+        
+      }
+    })
+  }
+
+  $(document).ready(function() {
+
+    $('#mail_process').hide()
+
+    $.get('@{Application.listContacts()}', function(data) {
+      contacts = data
+    })
+    
+    $('#send_button').click(function(event) {
+      $('#mail_process').show()
+      $('#mail_form').hide()
+      
+      running = true
+      
+      send()
+    })
+    
+    $('#cancel_button').click(function(event) {
+      $('#mail_process').hide()
+      $('#mail_form').show()
+      
+      running = false
+      
+      $('#delivered').html("")
+    })
+
+  })
+
+</script>
+#{/verbatim}
+
+#{if flash.importCount}
+Import: ${flash.importCount} contact(s)
+#{/if}
+
+#{if flash.deleteCount}
+Delete: ${flash.deleteCount} contact(s)
+#{/if}
+
+<p>
+  Current contact: ${totalContacts} ,
+  <a href="@{importPage()}">Import Contacts</a>,
+  <a href="@{removeAllContacts()}">Delete Contacts</a>
+</p>
+
+<h1>Mail</h1>
+<div id="mail_process">
+  <p>
+    <input id="cancel_button" type="button" value="Cancel" />
+  </p>
+  
+  <p id="delivered_count">
+  </p>
+  
+  <p id="delivered">
+  </p>
+</div>
+
+<form id="mail_form" method="POST" enctype="multipart/form-data">
+
+  <p>
+    <input id="send_button" type="button" value="Send" />
+  </p>
+
+  <p>
+    <label for="from">From: </label>
+    #{if flash.from}
+    <input type="text" name="from" id="from" size="30" value="${flash.from}"/>
+    #{/if}
+    #{else}
+    <input type="text" name="from" id="from" size="30" value="${sender}"/>
+    #{/else}
+
+
+    <span style="color: red">#{error 'from' /}</span>
+  </p>
+
+  <p>
+    <label for="subject">Subject: </label>
+    <input type="text" name="subject" id="subject" size="50" value="${flash.subject}"/>
+
+    <span style="color: red">#{error 'subject' /}</span>
+  </p>
+
+  <p>
+    <label for="attachment">Attachments: </label>
+    <!--
+    Temporary disable
+    <a href="#" onclick="addAttachment()">Add attachment</a>
+    -->
+  </p>
+
+  <p id="attachments">
+    <input type="file" name="attachment" id="attachment"/>
+  </p>
+
+  <p>
+    <label for="htmlContent">HTML Content: </label>
+    <span style="color:red">#{error 'htmlContent' /}</span>
+  </p>
+
+  <p>
+    <textarea rows="30" cols="50" name="htmlContent" id="htmlContent">${flash.htmlContent}</textarea>
+  </p>
+
+  <p>
+    <label for="textContent">Text content: </label>
+  </p>
+
+  <p>
+    <textarea rows="30" cols="50" name="textContent" id="textContent">${flash.textContent}</textarea>
+  </p>
+
+</form>

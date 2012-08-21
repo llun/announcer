@@ -1,0 +1,15 @@
+#{extends 'main.html' /}
+#{set title:'Import Contacts' /}
+
+<form action="@{importContacts()}" method="POST" enctype="multipart/form-data">
+
+    <p>
+        <label for="importFile">Contact File</label>
+        <input type="file" name="importFile" id="importFile" />
+    </p>
+
+    <p>
+        <input type="submit" value="Import" />
+    </p>
+
+</form>
